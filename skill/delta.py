@@ -22,13 +22,29 @@ def step(state: StateContext, event: Event) -> StateContext:
         new_state.state = "idle"
 
     elif event.type == "tool_call":
-        # фиксируем intent (НЕ результат)
+        # P0: сохраняем intent в состоянии
+        new_state.pending_tool_call = event.payload
         new_state.state = "waiting_tool"
 
     elif event.type == "tool_result":
+        # P0: валидация соответствия tool_call → tool_result
+        if new_state.pending_tool_call is None:
+            raise ValueError("tool_result without pending_tool_call")
+
+        expected_tool = new_state.pending_tool_call.get("tool_name")
+        actual_tool = event.payload.get("tool_name")
+
+        if expected_tool != actual_tool:
+            raise ValueError(
+                f"Tool mismatch: expected {expected_tool}, got {actual_tool}"
+            )
+
         new_state.tool_results = merge_tool_results(
             new_state.tool_results + [event.payload]
         )
+
+        # очищаем pending
+        new_state.pending_tool_call = None
         new_state.state = "processing"
 
     else:
