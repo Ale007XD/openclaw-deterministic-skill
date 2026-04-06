@@ -18,6 +18,7 @@ from .step_result import StepResult
 from .step_builder import StepBuilder
 from .engine import ExecutionEngine
 from .event_log import EventLog
+from .loop import run, LoopResult
 
 __all__ = (
     "StateContext",
@@ -26,4 +27,6 @@ __all__ = (
     "StepBuilder",
     "ExecutionEngine",
     "EventLog",
+    "run",
+    "LoopResult",
 )
