@@ -1,6 +1,6 @@
 [project]
 name = "openclaw-deterministic-skill"
-version = "0.4.0"
+version = "0.5.0"
 description = "Deterministic FSM kernel for LLM agent execution with event sourcing and replay"
 authors = [{ name = "Ale007XD" }]
 license = { text = "MIT" }
@@ -24,4 +24,4 @@ Repository = "https://github.com/Ale007XD/openclaw-deterministic-skill"
 
 [build-system]
 requires = ["setuptools>=68"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
