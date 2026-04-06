@@ -7,15 +7,16 @@ def run():
     base = os.path.dirname(__file__)
     root = os.path.dirname(base)
 
-    # ✅ КЛЮЧЕВОЙ ФИКС
-    if root not in sys.path:
-        sys.path.insert(0, root)
+    # 🔥 КРИТИЧНО: добавить ДО всего
+    sys.path.insert(0, root)
+
+    print("SYS.PATH =", sys.path[0])
 
     for file in os.listdir(base):
         if file.endswith("_test.py"):
             path = os.path.join(base, file)
             print(f"Running {file}")
-            runpy.run_path(path, run_name="__main__")
+            runpy.run_path(path, run_name="__main__")  # ✅ важно
 
 
 if __name__ == "__main__":
