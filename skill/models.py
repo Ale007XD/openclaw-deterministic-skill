@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 class StateContext(BaseModel):
@@ -9,3 +9,6 @@ class StateContext(BaseModel):
     messages: List[Dict[str, Any]] = Field(default_factory=list)
     iteration: int = 0
     tool_results: List[Dict[str, Any]] = Field(default_factory=list)
+
+    # P0: фиксируем ожидаемый tool_call
+    pending_tool_call: Optional[Dict[str, Any]] = None
