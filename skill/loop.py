@@ -92,34 +92,36 @@ async def run(
     log.append(user_event)
 
     reply: Optional[str] = None
-    stop_reason = "max_iter"
 
     # --- 2. Основной цикл ----------------------------------------------------
     for _ in range(max_iter):
         if state.state != "processing":
-            stop_reason = "idle"
             break
 
         # 2a. Вызов провайдера
         response = await provider.chat(state.messages, tools=tools)
-        causation_id = log.events[-1].id   # последнее записанное событие
 
         # 2b. ProviderResponse → Events
+        # causation_id берём здесь — до применения llm_events
+        current_causation = log.events[-1].id
         llm_events = map_response_to_events(
             response,
-            causation_id=causation_id,
+            causation_id=current_causation,
             correlation_id=correlation_id,
         )
 
         if not llm_events:
             # Провайдер вернул пустой ответ — выходим
-            stop_reason = "idle"
             break
 
-        # 2c. Применяем события LLM к состоянию
+        # 2c. Применяем события LLM к состоянию.
+        # D2: causation_id строится цепочкой — каждое событие ссылается на предыдущее,
+        # а не на одного общего предка. Это восстанавливает граф причинности при replay.
         for ev in llm_events:
+            ev = ev.model_copy(update={"causation_id": current_causation})
             state = step(state, ev)
             log.append(ev)
+            current_causation = ev.id   # следующее событие ссылается на это
 
             if ev.type == "llm_response":
                 reply = ev.payload.get("text")
@@ -127,8 +129,7 @@ async def run(
         # 2d. Обработка tool_call
         if state.state == "waiting_tool":
             if executor is None:
-                stop_reason = "no_executor"
-                break
+                break   # stop_reason = "no_executor" — определяется ниже
 
             pending = state.pending_tool_call
             tool_name = pending["tool_name"]
@@ -152,11 +153,15 @@ async def run(
             state = step(state, tool_result_event)
             log.append(tool_result_event)
             # После tool_result state = "processing" → следующая итерация
+
+    # D6: stop_reason определяется в одном месте — по итоговому state.
+    # Устраняет разбросанные присвоения и post-hoc коррекцию.
+    if state.state == "idle":
+        stop_reason = "idle"
+    elif state.state == "waiting_tool" and executor is None:
+        stop_reason = "no_executor"
     else:
         stop_reason = "max_iter"
-
-    if state.state == "idle" and stop_reason == "max_iter":
-        stop_reason = "idle"
 
     return LoopResult(
         final_state=state,

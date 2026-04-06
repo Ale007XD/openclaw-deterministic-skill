@@ -13,6 +13,6 @@ def merge_tool_results(results: List[Dict]) -> List[Dict]:
         unique[key] = r
 
     return sorted(
-        unique.values(),
+        list(unique.values()),
         key=lambda r: (r.get("tool_name", ""), r.get("call_id", ""))
     )
