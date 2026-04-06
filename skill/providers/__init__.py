@@ -1,10 +1,5 @@
 """
 Provider Layer — LLM → Event
-
-Exports:
-- BaseProvider
-- ProviderResponse
-- OpenAIProvider
 """
 
 from .base_provider import BaseProvider
