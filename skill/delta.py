@@ -1,6 +1,5 @@
 from .models import StateContext
 from .events import Event
-from .config import is_strict_mode
 from .tool_merge import merge_tool_results
 
 
@@ -22,12 +21,17 @@ def step(state: StateContext, event: Event) -> StateContext:
         new_state.state = "idle"
 
     elif event.type == "tool_call":
-        # P0: сохраняем intent в состоянии
+        # guard: второй tool_call без tool_result — нарушение инварианта
+        if new_state.pending_tool_call is not None:
+            raise ValueError(
+                f"tool_call while pending: "
+                f"{new_state.pending_tool_call.get('tool_name')}"
+            )
         new_state.pending_tool_call = event.payload
         new_state.state = "waiting_tool"
 
     elif event.type == "tool_result":
-        # P0: валидация соответствия tool_call → tool_result
+        # валидация соответствия tool_call → tool_result
         if new_state.pending_tool_call is None:
             raise ValueError("tool_result without pending_tool_call")
 
@@ -42,13 +46,12 @@ def step(state: StateContext, event: Event) -> StateContext:
         new_state.tool_results = merge_tool_results(
             new_state.tool_results + [event.payload]
         )
-
-        # очищаем pending
         new_state.pending_tool_call = None
         new_state.state = "processing"
 
     else:
-        if is_strict_mode():
+        # P1: env больше не нужен — strict_mode живёт в StateContext
+        if new_state.strict_mode:
             raise ValueError(f"Unknown event type: {event.type}")
 
     new_state.iteration += 1

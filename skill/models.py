@@ -12,3 +12,7 @@ class StateContext(BaseModel):
 
     # P0: фиксируем ожидаемый tool_call
     pending_tool_call: Optional[Dict[str, Any]] = None
+
+    # P1: strict_mode в состоянии — δ больше не зависит от env
+    # False = неизвестные event.type игнорируются молча
+    strict_mode: bool = True
