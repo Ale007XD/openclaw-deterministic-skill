@@ -1,23 +1,18 @@
-from typing import List, Dict, Any
+from typing import List, Dict
 from .base_provider import BaseProvider
-from .provider_response import ProviderResponse, ToolCall
+from .provider_response import ProviderResponse
 
 
 class OpenAIProvider(BaseProvider):
-    """
-    Stub provider (no external dependency).
-    Replace with real OpenAI SDK integration later.
-    """
 
     async def chat(
         self,
         messages: List[Dict],
         tools: list | None = None,
     ) -> ProviderResponse:
-        """
-        Deterministic stub:
-        Always echoes last user message.
-        """
+
+        if tools is not None:
+            raise NotImplementedError("Tool calling not implemented in stub")
 
         last = messages[-1]["content"] if messages else ""
 
